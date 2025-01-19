@@ -13,7 +13,7 @@ class Speech extends StatefulWidget {
 class _SpeechState extends State<Speech> {
 SpeechToText _speechToText =SpeechToText();
 bool _isEnabled=false;
-String _lastWords=' ';
+String _lastWords='Tap to start';
 
 @override
   void initState() {
