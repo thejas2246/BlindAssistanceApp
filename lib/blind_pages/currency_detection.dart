@@ -1,57 +1,320 @@
+import 'dart:math';
+import 'dart:ui';
+import 'package:flutter_tts/flutter_tts.dart';
+
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:camera/camera.dart';
+import 'package:google_mlkit_object_detection/google_mlkit_object_detection.dart';
+import 'dart:io';
+import 'package:flutter/services.dart';
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
+late List<CameraDescription> cameras;
+late FlutterTts flutterTts;
 
 class CurrencyDetection extends StatefulWidget {
-  const CurrencyDetection({super.key});
+  CurrencyDetection({Key? key, required this.title}) : super(key: key);
+  final String title;
 
   @override
   _CurrencyDetectionState createState() => _CurrencyDetectionState();
 }
 
-class _CurrencyDetectionState extends State<CurrencyDetection>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
+class _CurrencyDetectionState extends State<CurrencyDetection> {
+  
+  dynamic controller;
+  bool isBusy = false;
+  dynamic objectDetector;
+  late Size size;
 
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(vsync: this);
-    _startAnimationWithDelay();
-  }
+  bool isSpeaking = false;
+  Set<String> spokenLabels = {};
+void start() async{
+WidgetsFlutterBinding.ensureInitialized();
+  cameras = await availableCameras();
+}
+ @override
+void initState(){
+  super.initState();
+  start();
+  flutterTts = FlutterTts();
+  flutterTts.setSpeechRate(0.5);
+  flutterTts.setPitch(1.0);
+  flutterTts.setVolume(1.0);
+  
+  // Add a completion handler to track when speech ends
+  flutterTts.setCompletionHandler(() {
+    setState(() {
+      isSpeaking = false;
+    });
+  });
 
-  void _startAnimationWithDelay() async {
-    // Delay before starting the animation
-    await Future.delayed(const Duration(seconds: 3));
-    _controller.forward(); // Start the animation
+  initializeCamera();
+}
+  initializeCamera() async {
+    final mode = DetectionMode.stream;
+    final modelPath = await _getModel('assets/ml/currencyperumon.tflite');
+    final options = LocalObjectDetectorOptions(
+      modelPath: modelPath,
+      classifyObjects: true,
+      multipleObjects: true,
+      mode: mode,
+    );
+    objectDetector = ObjectDetector(options: options);
+
+    controller = CameraController(
+      cameras[0],
+      ResolutionPreset.high,
+      imageFormatGroup: Platform.isAndroid
+          ? ImageFormatGroup.nv21
+          : ImageFormatGroup.bgra8888,
+    );
+    await controller.initialize().then((_) {
+      if (!mounted) {
+        return;
+      }
+      controller.startImageStream((image) => {
+        if (!isBusy)
+          {
+            isBusy = true,
+            img = image,
+            doObjectDetectionOnFrame()
+          }
+      });
+    });
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    controller?.dispose();
+    objectDetector.close();
     super.dispose();
+  }
+
+  Future<String> _getModel(String asset) async {
+    final path = '${(await getApplicationSupportDirectory()).path}/$asset';
+    await Directory(dirname(path)).create(recursive: true);
+    final file = File(path);
+    if (!await file.exists()) {
+      final byteData = await rootBundle.load(asset);
+      await file.writeAsBytes(
+          byteData.buffer.asUint8List(byteData.offsetInBytes, byteData.lengthInBytes));
+    }
+    return file.path;
+  }
+
+  dynamic _scanResults;
+  CameraImage? img;
+
+  doObjectDetectionOnFrame() async {
+    var frameImg = getInputImage();
+    List<DetectedObject> objects = await objectDetector.processImage(frameImg);
+    print("len= ${objects.length}");
+
+    setState(() {
+      _scanResults = objects;
+    });
+
+    // Process labels for TTS
+    processLabels(objects);
+    isBusy = false;
+  }
+
+  final _orientations = {
+    DeviceOrientation.portraitUp: 0,
+    DeviceOrientation.landscapeLeft: 90,
+    DeviceOrientation.portraitDown: 180,
+    DeviceOrientation.landscapeRight: 270,
+  };
+
+  InputImage? getInputImage() {
+    final camera = cameras[0];
+    final sensorOrientation = camera.sensorOrientation;
+    InputImageRotation? rotation;
+
+    if (Platform.isIOS) {
+      rotation = InputImageRotationValue.fromRawValue(sensorOrientation);
+    } else if (Platform.isAndroid) {
+      var rotationCompensation =
+          _orientations[controller!.value.deviceOrientation];
+      if (rotationCompensation == null) return null;
+      if (camera.lensDirection == CameraLensDirection.front) {
+        rotationCompensation = (sensorOrientation + rotationCompensation) % 360;
+      } else {
+        rotationCompensation =
+            (sensorOrientation - rotationCompensation + 360) % 360;
+      }
+      rotation = InputImageRotationValue.fromRawValue(rotationCompensation);
+    }
+
+    if (rotation == null) return null;
+
+    final format = InputImageFormatValue.fromRawValue(img!.format.raw);
+    if (format == null ||
+        (Platform.isAndroid && format != InputImageFormat.nv21) ||
+        (Platform.isIOS && format != InputImageFormat.bgra8888)) return null;
+
+    if (img!.planes.length != 1) return null;
+    final plane = img!.planes.first;
+
+    return InputImage.fromBytes(
+      bytes: plane.bytes,
+      metadata: InputImageMetadata(
+        size: Size(img!.width.toDouble(), img!.height.toDouble()),
+        rotation: rotation,
+        format: format,
+        bytesPerRow: plane.bytesPerRow,
+      ),
+    );
+  }
+
+processLabels(List<DetectedObject> objects)async {
+  for (var detectedObject in objects) {
+    for (var label in detectedObject.labels) {
+      if (label.text.isNotEmpty && !spokenLabels.contains(label.text) && !isSpeaking) {
+        spokenLabels.add(label.text);
+        isSpeaking = true;
+
+        // Speak the label
+         await flutterTts.awaitSpeakCompletion(true);
+        flutterTts.speak(label.text).then((_) {
+          setState(() {
+            isSpeaking = false;
+          });
+        });
+        await Future.delayed(Duration(seconds: 1));
+        // Clear spoken labels after 2 seconds so it can be spoken again
+        Future.delayed(Duration(seconds: 2), () {
+          spokenLabels.remove(label.text);
+        });
+      }
+    }
+  }
+}
+  Widget buildResult() {
+    if (_scanResults == null ||
+        controller == null ||
+        !controller.value.isInitialized) {
+      return Text('');
+    }
+
+    final Size imageSize = Size(
+      controller.value.previewSize!.height,
+      controller.value.previewSize!.width,
+    );
+    CustomPainter painter = ObjectDetectorPainter(imageSize, _scanResults);
+    return CustomPaint(
+      painter: painter,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
-      appBar: AppBar(
-        title: const Text(
-          'Currency Detection',
-          style: TextStyle(
-            color: Color.fromRGBO(0, 0, 0, 1),
-            fontFamily: 'Mantinia',
-            fontSize: 30,
+    List<Widget> stackChildren = [];
+    size = MediaQuery.of(context).size;
+    if (controller != null) {
+      stackChildren.add(
+        Positioned(
+          top: 0.0,
+          left: 0.0,
+          width: size.width,
+          height: size.height,
+          child: Container(
+            child: (controller.value.isInitialized)
+                ? AspectRatio(
+                    aspectRatio: controller.value.aspectRatio,
+                    child: CameraPreview(controller),
+                  )
+                : Container(),
           ),
         ),
-        backgroundColor: const Color.fromARGB(255, 211, 208, 208),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color.fromRGBO(17, 17, 17, 1)),
-          onPressed: () {
-            Navigator.pop(context); // Navigate back to the previous page
-          },
-        ),
+      );
+
+      stackChildren.add(
+        Positioned(
+            top: 0.0,
+            left: 0.0,
+            width: size.width,
+            height: size.height,
+            child: buildResult()),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Object detector"),
+        backgroundColor: Colors.pinkAccent,
       ),
-      
+      backgroundColor: Colors.black,
+      body: Container(
+          margin: const EdgeInsets.only(top: 0),
+          color: Colors.black,
+          child: Stack(
+            children: stackChildren,
+          )),
     );
+  }
+}
+
+class ObjectDetectorPainter extends CustomPainter {
+  ObjectDetectorPainter(this.absoluteImageSize, this.objects);
+
+  final Size absoluteImageSize;
+  final List<DetectedObject> objects;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final double scaleX = size.width / absoluteImageSize.width;
+    final double scaleY = size.height / absoluteImageSize.height;
+
+    final Paint paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0
+      ..color = Colors.pinkAccent;
+
+    for (DetectedObject detectedObject in objects) {
+      print("Bounding Box: ${detectedObject.boundingBox}");
+
+      for (Label label in detectedObject.labels) {
+        print("Label: ${label.text}, Confidence: ${label.confidence.toStringAsFixed(2)}");
+
+        if (label.text.isEmpty) {
+          print("Warning: Empty label detected.");
+        }
+
+
+        canvas.drawRect(
+          Rect.fromLTRB(
+            detectedObject.boundingBox.left * scaleX,
+            detectedObject.boundingBox.top * scaleY,
+            detectedObject.boundingBox.right * scaleX,
+            detectedObject.boundingBox.bottom * scaleY,
+          ),
+          paint,
+        );
+
+        TextSpan span = TextSpan(
+            text: label.text,
+            style: const TextStyle(fontSize: 25, color: Colors.blue));
+        TextPainter tp = TextPainter(
+            text: span,
+            textAlign: TextAlign.left,
+            textDirection: TextDirection.ltr);
+        tp.layout();
+        tp.paint(
+            canvas,
+            Offset(detectedObject.boundingBox.left * scaleX,
+                detectedObject.boundingBox.top * scaleY));
+        break; // Remove if you want to display multiple labels
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(ObjectDetectorPainter oldDelegate) {
+    return oldDelegate.absoluteImageSize != absoluteImageSize ||
+        oldDelegate.objects != objects;
   }
 }
