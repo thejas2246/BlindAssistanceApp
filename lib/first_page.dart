@@ -65,7 +65,7 @@ class FirstPage extends StatelessWidget {
                   child: SizedBox(
                     width: 200,
                     height: 200,
-                    child: Lottie.asset('assets/lottie/blindman3.json',))
+                    child: Lottie.asset('assets/lottie/blindman3.json',animate: false))
                 ),
               ),
               SizedBox(
@@ -103,7 +103,7 @@ class FirstPage extends StatelessWidget {
                   child: SizedBox(
                     width: 200,
                     height: 200,
-                    child: Lottie.asset('assets/lottie/deaf.json',)),
+                    child: Lottie.asset('assets/lottie/deaf.json',animate: false)),
                 ),
               ),
               SizedBox(

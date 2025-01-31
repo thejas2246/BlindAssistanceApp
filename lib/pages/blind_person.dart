@@ -97,7 +97,7 @@ class _BlindpersonState extends State<Blindperson>
                             )),
                         onPressed: () {
                           Get.to(
-                            () => const Objectd(),
+                            () =>  MyHomePage(title: 'blind',),
                             transition: Transition.circularReveal,
                             duration: Duration(seconds: 1),
                           );

@@ -44,9 +44,10 @@ dependencies:
   speech_to_text: ^7.0.0
   avatar_glow: ^3.0.1
   clipboard: ^0.1.3
-  camera: ^0.11.0+2
-  google_ml_kit: ^0.19.0
   google_fonts: ^6.2.1
+  flutter_tts: ^4.2.2
+  camera: ^0.10.5+9
+  google_mlkit_object_detection: ^0.14.0
 
 dev_dependencies:
 
@@ -86,6 +87,7 @@ flutter:
   assets:
     - assets/images/
     - assets/lottie/
+    - assets/ml/
     
   #   - images/a_dot_ham.jpeg
 
