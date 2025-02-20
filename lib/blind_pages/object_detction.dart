@@ -15,8 +15,8 @@ late List<CameraDescription> cameras;
 late FlutterTts flutterTts;
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key? key, required this.title}) : super(key: key);
-  final String title;
+  MyHomePage({Key? key,}) : super(key: key);
+
 
   @override
   _MyHomePageState createState() => _MyHomePageState();
@@ -51,11 +51,11 @@ void initState(){
     });
   });
 
-  initializeCamera();
+  initializeCamera(); 
 }
   initializeCamera() async {
     final mode = DetectionMode.stream;
-    final modelPath = await _getModel('assets/ml/efficientnet.tflite');
+    final modelPath = await _getModel('assets/ml/object_custom_detect_97.tflite');
     final options = LocalObjectDetectorOptions(
       modelPath: modelPath,
       classifyObjects: true,
@@ -66,7 +66,7 @@ void initState(){
 
     controller = CameraController(
       cameras[0],
-      ResolutionPreset.high,
+      ResolutionPreset.ultraHigh,
       imageFormatGroup: Platform.isAndroid
           ? ImageFormatGroup.nv21
           : ImageFormatGroup.bgra8888,
@@ -185,7 +185,7 @@ processLabels(List<DetectedObject> objects)async {
           });
         });
         await Future.delayed(Duration(seconds: 1));
-        // Clear spoken labels after 2 seconds so it can be spoken again
+
         Future.delayed(Duration(seconds: 2), () {
           spokenLabels.remove(label.text);
         });
@@ -307,7 +307,7 @@ class ObjectDetectorPainter extends CustomPainter {
             canvas,
             Offset(detectedObject.boundingBox.left * scaleX,
                 detectedObject.boundingBox.top * scaleY));
-        break; // Remove if you want to display multiple labels
+        break;
       }
     }
   }

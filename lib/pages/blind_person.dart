@@ -97,7 +97,7 @@ class _BlindpersonState extends State<Blindperson>
                             )),
                         onPressed: () {
                           Get.to(
-                            () =>  MyHomePage(title: 'blind',),
+                            () =>  MyHomePage(),
                             transition: Transition.circularReveal,
                             duration: Duration(seconds: 1),
                           );
@@ -247,7 +247,7 @@ class _BlindpersonState extends State<Blindperson>
                             )),
                         onPressed: () {
                           Get.to(
-                            () =>  CurrencyDetection(title: 'currency',),
+                            () =>  CurrencyDetection(title:'currency'),
                             transition: Transition.circularReveal,
                             duration: Duration(seconds: 1),
                           );

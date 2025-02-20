@@ -19,10 +19,10 @@ class CurrencyDetection extends StatefulWidget {
   final String title;
 
   @override
-  _CurrencyDetectionState createState() => _CurrencyDetectionState();
+  _MyHomePageState createState() => _MyHomePageState();
 }
 
-class _CurrencyDetectionState extends State<CurrencyDetection> {
+class _MyHomePageState extends State<CurrencyDetection> {
   
   dynamic controller;
   bool isBusy = false;
@@ -55,7 +55,7 @@ void initState(){
 }
   initializeCamera() async {
     final mode = DetectionMode.stream;
-    final modelPath = await _getModel('assets/ml/currencyperumon.tflite');
+    final modelPath = await _getModel('assets/ml/currencyfull95.tflite');
     final options = LocalObjectDetectorOptions(
       modelPath: modelPath,
       classifyObjects: true,
@@ -66,7 +66,7 @@ void initState(){
 
     controller = CameraController(
       cameras[0],
-      ResolutionPreset.high,
+      ResolutionPreset.medium,
       imageFormatGroup: Platform.isAndroid
           ? ImageFormatGroup.nv21
           : ImageFormatGroup.bgra8888,
@@ -109,18 +109,23 @@ void initState(){
   CameraImage? img;
 
   doObjectDetectionOnFrame() async {
-    var frameImg = getInputImage();
-    List<DetectedObject> objects = await objectDetector.processImage(frameImg);
-    print("len= ${objects.length}");
+  var frameImg = getInputImage();
+  List<DetectedObject> objects = await objectDetector.processImage(frameImg);
+  
+  // Filter objects based on confidence score
+  objects = objects.where((obj) => obj.labels.any((label) => label.confidence >= 0.8)).toList();
 
-    setState(() {
-      _scanResults = objects;
-    });
+  print("Filtered Objects Count: ${objects.length}");
 
-    // Process labels for TTS
-    processLabels(objects);
-    isBusy = false;
-  }
+  setState(() {
+    _scanResults = objects;
+  });
+
+  // Process labels for TTS
+  processLabels(objects);
+  isBusy = false;
+}
+
 
   final _orientations = {
     DeviceOrientation.portraitUp: 0,
@@ -170,21 +175,26 @@ void initState(){
     );
   }
 
-processLabels(List<DetectedObject> objects)async {
+processLabels(List<DetectedObject> objects) async {
   for (var detectedObject in objects) {
     for (var label in detectedObject.labels) {
-      if (label.text.isNotEmpty && !spokenLabels.contains(label.text) && !isSpeaking) {
+      if (label.confidence >= 0.8 && label.text.isNotEmpty && 
+          !spokenLabels.contains(label.text) && !isSpeaking && 
+          label.text != "0 hundred rupees") {
+        
         spokenLabels.add(label.text);
         isSpeaking = true;
 
         // Speak the label
-         await flutterTts.awaitSpeakCompletion(true);
-        flutterTts.speak(label.text).then((_) {
-          setState(() {
-            isSpeaking = false;
-          });
+        await flutterTts.awaitSpeakCompletion(true);
+        await flutterTts.speak(label.text);
+        
+        setState(() {
+          isSpeaking = false;
         });
+
         await Future.delayed(Duration(seconds: 1));
+
         // Clear spoken labels after 2 seconds so it can be spoken again
         Future.delayed(Duration(seconds: 2), () {
           spokenLabels.remove(label.text);
@@ -193,6 +203,7 @@ processLabels(List<DetectedObject> objects)async {
     }
   }
 }
+
   Widget buildResult() {
     if (_scanResults == null ||
         controller == null ||
@@ -275,15 +286,10 @@ class ObjectDetectorPainter extends CustomPainter {
       ..color = Colors.pinkAccent;
 
     for (DetectedObject detectedObject in objects) {
-      print("Bounding Box: ${detectedObject.boundingBox}");
-
       for (Label label in detectedObject.labels) {
+        if (label.confidence < 0.8) continue; // Skip low-confidence objects
+
         print("Label: ${label.text}, Confidence: ${label.confidence.toStringAsFixed(2)}");
-
-        if (label.text.isEmpty) {
-          print("Warning: Empty label detected.");
-        }
-
 
         canvas.drawRect(
           Rect.fromLTRB(
@@ -295,18 +301,24 @@ class ObjectDetectorPainter extends CustomPainter {
           paint,
         );
 
-        TextSpan span = TextSpan(
+        if (label.text != "0 hundred rupees") {
+          TextSpan span = TextSpan(
             text: label.text,
-            style: const TextStyle(fontSize: 25, color: Colors.blue));
-        TextPainter tp = TextPainter(
+            style: const TextStyle(fontSize: 25, color: Colors.blue),
+          );
+          TextPainter tp = TextPainter(
             text: span,
             textAlign: TextAlign.left,
-            textDirection: TextDirection.ltr);
-        tp.layout();
-        tp.paint(
+            textDirection: TextDirection.ltr,
+          );
+          tp.layout();
+          tp.paint(
             canvas,
             Offset(detectedObject.boundingBox.left * scaleX,
-                detectedObject.boundingBox.top * scaleY));
+                detectedObject.boundingBox.top * scaleY),
+          );
+        }
+
         break; // Remove if you want to display multiple labels
       }
     }

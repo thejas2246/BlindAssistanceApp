@@ -13,10 +13,14 @@ class _SpeechState extends State<Speech> {
   SpeechToText _speechToText = SpeechToText();
   String _lastWords = 'Tap to start';
 
-  @override
-  void initState() async {
-    super.initState();
+void startSpeech()async{
     await _speechToText.initialize();
+}
+  @override
+  void initState() {
+    super.initState();
+    startSpeech();
+
   }
 
   void _startListening() async {
