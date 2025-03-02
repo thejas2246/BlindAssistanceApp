@@ -6,6 +6,7 @@ import 'package:blind_assistance/blind_pages/object_detction.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 
 class Blindperson extends StatefulWidget {
   const Blindperson({super.key});
@@ -17,12 +18,20 @@ class Blindperson extends StatefulWidget {
 class _BlindpersonState extends State<Blindperson>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
+  FlutterTts flutterTts = FlutterTts();
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(vsync: this);
     _startAnimationLoop();
+    _initTts();
+    flutterTts.speak('Click any of the options below');
+  }
+
+   void _initTts() async {
+    await flutterTts.setLanguage("en-US");
+    await flutterTts.setSpeechRate(0.4);
   }
 
   void _startAnimationLoop() async {
@@ -171,7 +180,7 @@ class _BlindpersonState extends State<Blindperson>
                             )),
                         onPressed: () {
                           Get.to(
-                            () => const TextDetecton(),
+                            () => OCRPage(),
                             transition: Transition.circularReveal,
                             duration: Duration(seconds: 1),
                           );

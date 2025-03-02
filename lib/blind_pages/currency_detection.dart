@@ -255,8 +255,8 @@ processLabels(List<DetectedObject> objects) async {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Object detector"),
-        backgroundColor: Colors.pinkAccent,
+        title: Center(child: const Text("Currency detector",style: TextStyle(fontFamily: "mantinia",fontSize: 30),)),
+         backgroundColor: Color.fromARGB(255, 211, 208, 208),
       ),
       backgroundColor: Colors.black,
       body: Container(

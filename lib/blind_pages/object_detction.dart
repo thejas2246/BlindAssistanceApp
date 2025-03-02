@@ -50,9 +50,15 @@ void initState(){
       isSpeaking = false;
     });
   });
-
+ _initTts();
+    flutterTts.speak('Starting Object Detection');
   initializeCamera(); 
+   
 }
+ void _initTts() async {
+    await flutterTts.setLanguage("en-US");
+    await flutterTts.setSpeechRate(0.4);
+  }
   initializeCamera() async {
     final mode = DetectionMode.stream;
     final modelPath = await _getModel('assets/ml/object_custom_detect_97.tflite');
@@ -244,8 +250,8 @@ processLabels(List<DetectedObject> objects)async {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Object detector"),
-        backgroundColor: Colors.pinkAccent,
+        title: Center(child: const Text("Object detector",style: TextStyle(fontFamily: "mantinia",fontSize: 30),)),
+        backgroundColor: Color.fromARGB(255, 211, 208, 208),
       ),
       backgroundColor: Colors.black,
       body: Container(

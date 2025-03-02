@@ -1,0 +1,20 @@
+{
+  "buildFiles": [
+    "/home/thejas/flutter/flutter_linux_3.29.0-stable/flutter/packages/flutter_tools/gradle/src/main/groovy/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/home/thejas/Android/Sdk/cmake/3.22.1/bin/ninja",
+      "-C",
+      "/mnt/others/programming/flutter projects/BlindAssistanceApp/android/app/.cxx/Debug/4fd266c3/x86_64",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/home/thejas/Android/Sdk/cmake/3.22.1/bin/ninja",
+    "-C",
+    "/mnt/others/programming/flutter projects/BlindAssistanceApp/android/app/.cxx/Debug/4fd266c3/x86_64",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {}
+}
