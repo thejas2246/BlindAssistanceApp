@@ -334,7 +334,7 @@ class _BlindpersonState extends State<Blindperson>
                             )),
                         onPressed: () {
                           Get.to(
-                            () => const BarDetection(),
+                            () => FaceDetection(),
                             transition: Transition.circularReveal,
                             duration: Duration(seconds: 1),
                           );

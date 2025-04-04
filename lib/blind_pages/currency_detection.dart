@@ -55,7 +55,7 @@ void initState(){
 }
   initializeCamera() async {
     final mode = DetectionMode.stream;
-    final modelPath = await _getModel('assets/ml/currencyfull95.tflite');
+    final modelPath = await _getModel('assets/ml/model.tflite');
     final options = LocalObjectDetectorOptions(
       modelPath: modelPath,
       classifyObjects: true,
@@ -113,7 +113,8 @@ void initState(){
   List<DetectedObject> objects = await objectDetector.processImage(frameImg);
   
   // Filter objects based on confidence score
-  objects = objects.where((obj) => obj.labels.any((label) => label.confidence >= 0.8)).toList();
+  objects = objects.where((obj) => obj.labels.any((label) => label.confidence >= 0.8
+  )).toList();
 
   print("Filtered Objects Count: ${objects.length}");
 
