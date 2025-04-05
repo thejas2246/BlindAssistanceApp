@@ -53,7 +53,7 @@ class _OCRPageState extends State<OCRPage> {
         recognizedText = recognized.text.isNotEmpty ? recognized.text : "No text found";
       });
 
-      // Speak the recognized text
+  
       if (recognized.text.isNotEmpty) {
         await flutterTts.speak(recognizedText);
       }

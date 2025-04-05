@@ -34,9 +34,9 @@ class Recognizer {
   void loadRegisteredFaces() async {
     registered.clear();
     final allRows = await dbHelper.queryAllRows();
-   // debugPrint('query all rows:');
+  
     for (final row in allRows) {
-    //  debugPrint(row.toString());
+   
       print(row[DatabaseHelper.columnName]);
       String name = row[DatabaseHelper.columnName];
       List<double> embd = row[DatabaseHelper.columnEmbedding].split(',').map((e) => double.parse(e)).toList().cast<double>();
@@ -47,7 +47,7 @@ class Recognizer {
   }
 
   void registerFaceInDB(String name, List<double> embedding) async {
-    // row to insert
+   
     Map<String, dynamic> row = {
       DatabaseHelper.columnName: name,
       DatabaseHelper.columnEmbedding: embedding.join(",")
@@ -87,30 +87,30 @@ class Recognizer {
 
   Recognition recognize(img.Image image,Rect location) {
 
-    //TODO crop face from image resize it and convert it to float array
+    
     var input = imageToArray(image);
     print(input.shape.toString());
 
-    //TODO output array
+    
     List output = List.filled(1*192, 0).reshape([1,192]);
 
-    //TODO performs inference
+    
     final runs = DateTime.now().millisecondsSinceEpoch;
     interpreter.run(input, output);
     final run = DateTime.now().millisecondsSinceEpoch - runs;
     print('Time to run inference: $run ms$output');
 
-    //TODO convert dynamic list to double list
+   
      List<double> outputArray = output.first.cast<double>();
 
-     //TODO looks for the nearest embeeding in the database and returns the pair
+    
      Pair pair = findNearest(outputArray);
      print("distance= ${pair.distance}");
 
      return Recognition(pair.name,location,outputArray,pair.distance);
   }
 
-  //TODO  looks for the nearest embeeding in the database and returns the pair which contain information of registered face with which face is most similar
+ 
   findNearest(List<double> emb){
     Pair pair = Pair("Unknown", -5);
     for (MapEntry<String, Recognition> item in registered.entries) {

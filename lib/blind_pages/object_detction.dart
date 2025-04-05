@@ -38,8 +38,6 @@ void initState(){
   flutterTts.setSpeechRate(0.5);
   flutterTts.setPitch(1.0);
   flutterTts.setVolume(1.0);
-  
-  // Add a completion handler to track when speech ends
   flutterTts.setCompletionHandler(() {
     setState(() {
       isSpeaking = false;
@@ -118,7 +116,6 @@ void initState(){
       _scanResults = objects;
     });
 
-    // Process labels for TTS
     processLabels(objects);
     isBusy = false;
   }
@@ -178,7 +175,7 @@ processLabels(List<DetectedObject> objects)async {
         spokenLabels.add(label.text);
         isSpeaking = true;
 
-        // Speak the label
+      
          await flutterTts.awaitSpeakCompletion(true);
         flutterTts.speak(label.text).then((_) {
           setState(() {

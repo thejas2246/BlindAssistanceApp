@@ -34,10 +34,10 @@ class _MyHomePageState extends State<FaceDetection> {
   CameraLensDirection camDirec = CameraLensDirection.front;
   late List<Recognition> recognitions = [];
 
-  //TODO declare face detector
+
   late FaceDetector faceDetector;
 
-  //TODO declare face recognizer
+
   late Recognizer recognizer;
 
 Future<void>start()async{
@@ -56,16 +56,16 @@ Future<void>start()async{
     flutterTts.setPitch(1);
     flutterTts.setCompletionHandler(() {
       setState(() {
-        isSpeaking = false; // Speech completed
+        isSpeaking = false; 
       });
     });
-    //TODO initialize face detector
+    
     var options =
         FaceDetectorOptions(performanceMode: FaceDetectorMode.accurate);
     faceDetector = FaceDetector(options: options);
-    //TODO initialize face recognizer
+    
     recognizer = Recognizer();
-    //TODO initialize camera footage
+   
     
   }
 
@@ -78,13 +78,13 @@ Future<void>start()async{
     }
   }
 
-  //TODO code to initialize the camera feed
+ 
   initializeCamera() async {
     controller = CameraController(description, ResolutionPreset.max,
         imageFormatGroup: Platform.isAndroid
-            ? ImageFormatGroup.nv21 // for Android
+            ? ImageFormatGroup.nv21 
             : ImageFormatGroup.bgra8888,
-        enableAudio: false); // for iOS);
+        enableAudio: false); 
     await controller.initialize().then((_) {
       if (!mounted) {
         return;
@@ -99,40 +99,37 @@ Future<void>start()async{
     });
   }
 
-  //TODO close all resources
+
   @override
   void dispose() {
     controller?.dispose();
     super.dispose();
   }
 
-  //TODO face detection on a frame
+ 
   dynamic _scanResults;
   CameraImage? frame;
   doFaceDetectionOnFrame() async {
-    //TODO convert frame into InputImage format
+   
     print('dfd');
     InputImage? inputImage = getInputImage();
-    //TODO pass InputImage to face detection model and detect faces
+    
 
     List<Face> faces = await faceDetector.processImage(inputImage!);
 
     print("fl=" + faces.length.toString());
-    //TODO perform face recognition on detected faces
+  
     performFaceRecognition(faces);
-    // setState(() {
-    //   _scanResults = faces;
-    //   isBusy = false;
-    // });
+   
   }
 
   img.Image? image;
   bool register = false;
-  // TODO perform Face Recognition
+
   performFaceRecognition(List<Face> faces) async {
     recognitions.clear();
 
-    //TODO convert CameraImage to Image and rotate it so that our frame will be in a portrait
+   
     image = Platform.isIOS
         ? _convertBGRA8888ToImage(frame!) as img.Image?
         : _convertNV21(frame!);
@@ -141,14 +138,14 @@ Future<void>start()async{
 
     for (Face face in faces) {
       Rect faceRect = face.boundingBox;
-      //TODO crop face
+ 
       img.Image croppedFace = img.copyCrop(image!,
           x: faceRect.left.toInt(),
           y: faceRect.top.toInt(),
           width: faceRect.width.toInt(),
           height: faceRect.height.toInt());
 
-      //TODO pass cropped face to face recognition model
+    
       Recognition recognition = recognizer.recognize(croppedFace!, faceRect);
       if (recognition.distance > 1.0) {
         recognition.name = "Unknown";
@@ -160,7 +157,7 @@ Future<void>start()async{
         await speak("${recognition.name}");
       }
 
-      //TODO show face registration dialogue
+    
       if (register) {
         showFaceRegistrationDialogue(croppedFace!, recognition);
         register = false;
@@ -173,7 +170,7 @@ Future<void>start()async{
     });
   }
 
-  //TODO Face Registration Dialogue
+
   TextEditingController textEditingController = TextEditingController();
   showFaceRegistrationDialogue(img.Image croppedFace, Recognition recognition) {
     showDialog(
@@ -276,8 +273,7 @@ Future<void>start()async{
           b = 0;
         else if (b > 262143) b = 262143;
 
-        // I don't know how these r, g, b values are defined, I'm just copying what you had bellow and
-        // getting their 8-bit values.
+
         outImg.setPixelRgb(i, j, ((r << 6) & 0xff0000) >> 16,
             ((g >> 2) & 0xff00) >> 8, (b >> 10) & 0xff);
       }
@@ -285,7 +281,6 @@ Future<void>start()async{
     return outImg;
   }
 
-  // TODO method to convert CameraImage to Image
   img.Image convertYUV420ToImage(CameraImage cameraImage) {
     final width = cameraImage.width;
     final height = cameraImage.height;
@@ -307,19 +302,19 @@ Future<void>start()async{
         final u = cameraImage.planes[1].bytes[uvIndex];
         final v = cameraImage.planes[2].bytes[uvIndex];
 
-        image.data!.setPixelR(w, h, yuv2rgb(y, u, v)); //= yuv2rgb(y, u, v);
+        image.data!.setPixelR(w, h, yuv2rgb(y, u, v)); 
       }
     }
     return image;
   }
 
   int yuv2rgb(int y, int u, int v) {
-    // Convert yuv pixel to rgb
+  
     var r = (y + v * 1436 / 1024 - 179).round();
     var g = (y - u * 46549 / 131072 + 44 - v * 93604 / 131072 + 91).round();
     var b = (y + u * 1814 / 1024 - 227).round();
 
-    // Clipping RGB values to be inside boundaries [ 0 , 255 ]
+ 
     r = r.clamp(0, 255);
     g = g.clamp(0, 255);
     b = b.clamp(0, 255);
@@ -337,7 +332,7 @@ Future<void>start()async{
     DeviceOrientation.landscapeRight: 270,
   };
 
-  //TODO convert CameraImage to InputImage
+
   InputImage? getInputImage() {
     final camera =
         camDirec == CameraLensDirection.front ? cameras[1] : cameras[0];
@@ -351,10 +346,10 @@ Future<void>start()async{
           _orientations[controller!.value.deviceOrientation];
       if (rotationCompensation == null) return null;
       if (camera.lensDirection == CameraLensDirection.front) {
-        // front-facing
+        
         rotationCompensation = (sensorOrientation + rotationCompensation) % 360;
       } else {
-        // back-facing
+        
         rotationCompensation =
             (sensorOrientation - rotationCompensation + 360) % 360;
       }
@@ -398,7 +393,7 @@ Future<void>start()async{
     );
   }
 
-  //TODO toggle camera direction
+ 
   void _toggleCameraDirection() async {
     if (camDirec == CameraLensDirection.back) {
       camDirec = CameraLensDirection.front;
@@ -420,7 +415,7 @@ Future<void>start()async{
     List<Widget> stackChildren = [];
     size = MediaQuery.of(context).size;
     if (controller != null) {
-      //TODO View for displaying the live camera footage
+   
       stackChildren.add(
         Positioned(
           top: 0.0,
@@ -438,7 +433,7 @@ Future<void>start()async{
         ),
       );
 
-      //TODO View for displaying rectangles around detected aces
+    
       stackChildren.add(
         Positioned(
             top: 0.0,
@@ -449,7 +444,7 @@ Future<void>start()async{
       );
     }
 
-    //TODO View for displaying the bar to switch camera direction or for registering faces
+   
     stackChildren.add(Positioned(
       top: size.height - 250,
       left: 0,

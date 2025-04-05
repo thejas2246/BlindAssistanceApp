@@ -19,11 +19,11 @@ class FirstPage extends StatelessWidget {
           children: [
             IconButton(
           
-              icon: ClipOval(child: Image.asset('assets/images/logoi.png',width: 45, fit: BoxFit.cover, ),), // Your image
+              icon: ClipOval(child: Image.asset('assets/images/logoi.png',width: 45, fit: BoxFit.cover, ),), 
               iconSize: 20,
-               // Set the size of the icon
+               
               onPressed: () {
-                // Your onPressed functionality
+                
               },
             ),
             SizedBox(width: 40,),
