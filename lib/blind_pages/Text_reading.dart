@@ -33,7 +33,7 @@ class _OCRPageState extends State<OCRPage> {
     final cameras = await availableCameras();
     _cameraController = CameraController(
       cameras[0],
-      ResolutionPreset.medium,
+      ResolutionPreset.max,
     );
     _initializeControllerFuture = _cameraController.initialize();
     setState(() {});

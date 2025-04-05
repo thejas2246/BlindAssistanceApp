@@ -51,12 +51,12 @@ void initState(){
    
 }
  void _initTts() async {
-    await flutterTts.setLanguage("en-US");
+    await flutterTts.setLanguage("en-IN");
     await flutterTts.setSpeechRate(0.4);
   }
   initializeCamera() async {
     final mode = DetectionMode.stream;
-    final modelPath = await _getModel('assets/ml/object_custom_detect_97.tflite');
+    final modelPath = await _getModel('assets/ml/object_last.tflite');
     final options = LocalObjectDetectorOptions(
       modelPath: modelPath,
       classifyObjects: true,
@@ -67,7 +67,7 @@ void initState(){
 
     controller = CameraController(
       cameras[0],
-      ResolutionPreset.ultraHigh,
+      ResolutionPreset.max,
       imageFormatGroup: Platform.isAndroid
           ? ImageFormatGroup.nv21
           : ImageFormatGroup.bgra8888,

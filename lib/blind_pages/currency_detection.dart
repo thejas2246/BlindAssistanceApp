@@ -55,7 +55,7 @@ void initState(){
 }
   initializeCamera() async {
     final mode = DetectionMode.stream;
-    final modelPath = await _getModel('assets/ml/model.tflite');
+    final modelPath = await _getModel('assets/ml/currencyfull95.tflite');
     final options = LocalObjectDetectorOptions(
       modelPath: modelPath,
       classifyObjects: true,
@@ -66,7 +66,7 @@ void initState(){
 
     controller = CameraController(
       cameras[0],
-      ResolutionPreset.medium,
+      ResolutionPreset.max,
       imageFormatGroup: Platform.isAndroid
           ? ImageFormatGroup.nv21
           : ImageFormatGroup.bgra8888,
@@ -113,7 +113,7 @@ void initState(){
   List<DetectedObject> objects = await objectDetector.processImage(frameImg);
   
   // Filter objects based on confidence score
-  objects = objects.where((obj) => obj.labels.any((label) => label.confidence >= 0.8
+  objects = objects.where((obj) => obj.labels.any((label) => label.confidence >= 0.7
   )).toList();
 
   print("Filtered Objects Count: ${objects.length}");
@@ -179,7 +179,7 @@ void initState(){
 processLabels(List<DetectedObject> objects) async {
   for (var detectedObject in objects) {
     for (var label in detectedObject.labels) {
-      if (label.confidence >= 0.8 && label.text.isNotEmpty && 
+      if (label.confidence >= 0.7 && label.text.isNotEmpty && 
           !spokenLabels.contains(label.text) && !isSpeaking && 
           label.text != "0 hundred rupees") {
         
@@ -288,7 +288,7 @@ class ObjectDetectorPainter extends CustomPainter {
 
     for (DetectedObject detectedObject in objects) {
       for (Label label in detectedObject.labels) {
-        if (label.confidence < 0.8) continue; // Skip low-confidence objects
+        if (label.confidence < 0.7) continue; 
 
         print("Label: ${label.text}, Confidence: ${label.confidence.toStringAsFixed(2)}");
 
@@ -320,7 +320,7 @@ class ObjectDetectorPainter extends CustomPainter {
           );
         }
 
-        break; // Remove if you want to display multiple labels
+        break;
       }
     }
   }
